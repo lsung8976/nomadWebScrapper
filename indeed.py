@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 LIMIT = 50
 URL = f'https://kr.indeed.com/%EC%B7%A8%EC%97%85?q=python&limit={LIMIT}'
 
-def extract_indeed_pages():
+def extract_pages():
     max_page = 0
     temp = URL
     pages = []
@@ -19,8 +19,6 @@ def extract_indeed_pages():
         if(max_page == max(pages)):
             break
         max_page = max(pages)
-        print(pages)
-        print(max_page)
     return max_page
 
 def extract_job(html):
@@ -28,11 +26,13 @@ def extract_job(html):
         title = html.find("h2", {"class" : "jobTitle css-1h4a4n5 eu4oa1w0"}).find("span").string
         company = html.find("span", {"class" : "companyName"}).string
         location = html.find("div", {"class" : "companyLocation"}).string
-        return {"title" : title, "company" : company, "location" : location}
+        job_id = html.find("a")["data-jk"]
+        return { "title" : title, "company" : company, "location" : location, "apply_link" : f"https://kr.indeed.com/applystart?jk={job_id}" }
 
-def extract_indeed_jobs(last_page):
+def extract_jobs(last_page):
     jobs = []
     for page in range(last_page):  
+        print(f"Scrapping Page {page}")
         result = requests.get(f"{URL}&start={page*LIMIT}")
         soup = BeautifulSoup(result.text, "html.parser")
         results = soup.find_all("td", {"class" : "resultContent"})
@@ -41,3 +41,8 @@ def extract_indeed_jobs(last_page):
             if dic != None:
                 jobs.append(dic)
     return jobs
+
+def get_jobs():
+    last_page = extract_pages()
+    jobs = extract_jobs(last_page)
+    return jobs 
